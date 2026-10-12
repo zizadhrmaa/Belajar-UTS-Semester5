@@ -1509,7 +1509,7 @@ Semua proses butuh hasilnya → `MPI_Allreduce(&local_max, &global_max, 1, MPI_D
 **L8 (Deadlock).** 3 proses; setiap proses memanggil `MPI_Ssend` ke `(rank+1)%3` lalu `MPI_Recv` dari `(rank+2)%3`. Apa yang terjadi? Perbaiki.
 <details><summary>Jawaban</summary>
 
-`MPI_Ssend` selalu menunggu sampai receive pasangan dimulai, tetapi semua proses sedang berada di Ssend → **deadlock** pasti. Perbaikan: `MPI_Sendrecv`; atau urutan bergantian — tetapi dengan jumlah proses **ganjil**, pola genap/ganjil biasa tidak cukup (rank 2 dan rank 0 sama-sama genap). Cara aman: rank 0 Recv dulu lalu Send, rank lain Send dulu lalu Recv (rantai terputus di satu titik), atau pakai `MPI_Isend`/`MPI_Irecv` + `MPI_Waitall`.
+`MPI_Ssend` selalu menunggu sampai receive pasangan dimulai, tetapi semua proses sedang berada di Ssend → **deadlock** pasti. Perbaikan: `MPI_Sendrecv`; atau urutan bergantian: rank genap Send dulu lalu Recv, rank ganjil Recv dulu lalu Send. Pola genap/ganjil ini **tetap aman walaupun jumlah prosesnya ganjil**. Contoh 3 proses: rank 0 Ssend ke 1 (rank 1 sedang Recv → selesai), lalu rank 2 Ssend ke 0 (rank 0 sudah di Recv → selesai), lalu rank 1 Ssend ke 2 (rank 2 sudah di Recv → selesai). Alternatif lain: hanya rank 0 yang Recv dulu (rantai terputus di satu titik), atau `MPI_Isend`/`MPI_Irecv` + `MPI_Waitall`.
 </details>
 
 **L9 (Schedule).** (a) `schedule(static,2)`, 11 iterasi (0..10), 3 thread. (b) `schedule(static)` tanpa chunk, 10 iterasi, 4 thread (aturan GCC).
